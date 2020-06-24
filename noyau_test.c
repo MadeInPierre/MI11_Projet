@@ -44,10 +44,6 @@ FIFO_GEN fifo_messages;
 char messages[NB_MESSAGES*TAILLE_MESSAGE];
 
 
-uint16_t get_color_code(uint16_t red, uint16_t green, uint16_t blue) {
-	return 16 + (red * 36) + (green * 6) + blue;
-}
-
 // Helper function used to append a message log when
 // the caller task is executed.
 void tache_msg(uint16_t *idx, uint16_t color, char* name, int i) {
@@ -116,7 +112,7 @@ TACHE tacheA(void) {
 
 	puts("------> DEBUT tache B");
 	while (1) {
-		tache_msg(&idx, 196, "A", i++);
+		tache_msg(&idx, 39, "A", i++);
 		waitfornticks((i % TACHE_A_WORK == 0) ? TACHE_A_SLEEP : 1);
 	}
 }
@@ -127,7 +123,7 @@ TACHE tacheB(void) {
 
 	puts("------> DEBUT tache B");
 	while (1) {
-		tache_msg(&idx, 27, "B", i++);
+		tache_msg(&idx, 88, "B", i++);
 		waitfornticks((i % TACHE_B_WORK == 0) ? TACHE_B_SLEEP : 1);
 	}
 }
@@ -138,7 +134,7 @@ TACHE tacheC(void) {
 
 	puts("------> DEBUT tache C");
 	while (1) {
-		tache_msg(&idx, 201, "C", i++);
+		tache_msg(&idx, 53, "C", i++);
 		waitfornticks((i % TACHE_C_WORK == 0) ? TACHE_C_SLEEP : 1);
 	}
 }
@@ -149,7 +145,7 @@ TACHE tacheD(void) {
 
 	puts("------> DEBUT tache D");
 	while (1) {
-		tache_msg(&idx, 202, "D", i++);
+		tache_msg(&idx, 21, "D", i++);
 		waitfornticks((i % TACHE_D_WORK == 0) ? TACHE_D_SLEEP : 1);
 
 		if (i==50) noyau_exit();
@@ -162,7 +158,7 @@ TACHE tacheE(void) {
 
 	puts("------> DEBUT tache E");
 	while (1) {
-		tache_msg(&idx, 100, "E", i++);
+		tache_msg(&idx, 142, "E", i++);
 		waitfornticks((i % TACHE_E_WORK == 0) ? TACHE_E_SLEEP : 1);
 	}
 }
