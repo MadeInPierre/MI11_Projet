@@ -65,6 +65,7 @@ void noyau_exit(void) {
     for (j = 0; j < MAX_TACHES; j++)
         printf("\nActivations tache %d : %d", j, compteurs[j]);
     /* Que faire quand on termine l'execution du noyau ? */
+
     for (;;);
 }
 

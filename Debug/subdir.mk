@@ -4,7 +4,6 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
-../FIFO.c \
 ../FIFO_GEN.c \
 ../TERMINAL.c \
 ../noyau.c \
@@ -20,7 +19,6 @@ S_UPPER_SRCS += \
 ../crt0.S 
 
 OBJS += \
-./FIFO.o \
 ./FIFO_GEN.o \
 ./TERMINAL.o \
 ./crt0.o \
@@ -34,7 +32,6 @@ OBJS += \
 ./versatile_timer.o 
 
 C_DEPS += \
-./FIFO.d \
 ./FIFO_GEN.d \
 ./TERMINAL.d \
 ./noyau.d \
