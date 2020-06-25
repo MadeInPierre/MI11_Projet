@@ -51,15 +51,15 @@ void tache_msg(uint16_t *idx, uint16_t color, char* name, int i) {
 	uint16_t b_idx = *idx;
 
 	_lock_();
-	if(fifogen_get(&fifo_messages, &b_idx) != 0){
+	if(fifogen_add(&fifo_messages, &b_idx) != 0){
 		messages[b_idx*TAILLE_MESSAGE] = '\0';
 		str_cat(&messages[b_idx*TAILLE_MESSAGE], CODE_BACKGROUND_COLOR);
 		i_to_a10 (color,temp_string);
 		str_cat(&messages[b_idx*TAILLE_MESSAGE], temp_string);
 		str_cat(&messages[b_idx*TAILLE_MESSAGE], "m ");
 		str_cat(&messages[b_idx*TAILLE_MESSAGE], name);
-//		i_to_a10 (i,temp_string);
-//		str_cat(&messages[b_idx*TAILLE_MESSAGE], temp_string);
+		//		i_to_a10 (i,temp_string);
+		//		str_cat(&messages[b_idx*TAILLE_MESSAGE], temp_string);
 		str_cat(&messages[b_idx*TAILLE_MESSAGE], CODE_RESET_COLOR);
 	}
 	*idx = b_idx;
@@ -69,39 +69,37 @@ void tache_msg(uint16_t *idx, uint16_t color, char* name, int i) {
 
 TACHE tacheMAIN(void) {
 	uint16_t idx;
-	//char temp_string[100];
+	char temp_string[100];
 
 	puts("------> EXEC tache M");
-	active(cree(tacheA));
-	active(cree(tacheB));
-	active(cree(tacheC));
-	active(cree(tacheD));
-	active(cree(tacheE));
+	active(cree(tacheA, 1));
+//	active(cree(tacheB, 2));
+//	active(cree(tacheC, 2));
+//	active(cree(tacheD, 2));
+//	active(cree(tacheE, 5));
 
 	while(1){
 		_lock_();
 		if(fifogen_taille_get(&fifo_messages) != 0){
-			fifogen_put(&fifo_messages, &idx);
+			fifogen_pop(&fifo_messages, &idx);
 			printf(&messages[idx*TAILLE_MESSAGE]);
 		}
 		_unlock_();
 
 		while(flag_tache_vide != 0){
-			tache_msg(&idx, 16, "M", idx);
+			_lock_();
+			if(fifogen_add(&fifo_messages, &idx) != 0){
+				messages[idx*TAILLE_MESSAGE] = '\0';
+				str_cat(&messages[idx*TAILLE_MESSAGE], CODE_BACKGROUND_COLOR);
+				i_to_a10 (16,temp_string);
+				str_cat(&messages[idx*TAILLE_MESSAGE], temp_string);
+				str_cat(&messages[idx*TAILLE_MESSAGE], "m A");
+				i_to_a10 (idx,temp_string);
+				str_cat(&messages[idx*TAILLE_MESSAGE], temp_string);
+				str_cat(&messages[idx*TAILLE_MESSAGE], CODE_RESET_COLOR);
+			}
 			flag_tache_vide = 0;
-//			_lock_();
-//			if(fifogen_get(&fifo_messages, &idx) != 0){
-//				messages[idx*TAILLE_MESSAGE] = '\0';
-//				str_cat(&messages[idx*TAILLE_MESSAGE], CODE_BACKGROUND_COLOR);
-//				i_to_a10 (16,temp_string);
-//				str_cat(&messages[idx*TAILLE_MESSAGE], temp_string);
-//				str_cat(&messages[idx*TAILLE_MESSAGE], "m A");
-//				i_to_a10 (idx,temp_string);
-//				str_cat(&messages[idx*TAILLE_MESSAGE], temp_string);
-//				str_cat(&messages[idx*TAILLE_MESSAGE], CODE_RESET_COLOR);
-//			}
-//			flag_tache_vide = 0;
-//			_unlock_();
+			_unlock_();
 		}
 	}
 }
@@ -110,10 +108,15 @@ TACHE tacheA(void) {
 	int i=0;
 	uint16_t idx;
 
-	puts("------> DEBUT tache B");
+	puts("------> DEBUT tache A");
 	while (1) {
-		tache_msg(&idx, 39, "A", i++);
-		waitfornticks((i % TACHE_A_WORK == 0) ? TACHE_A_SLEEP : 1);
+		if(flag_tache_vide != 0) {
+			tache_msg(&idx, 39, "A", i++);
+			flag_tache_vide = 0;
+		}
+
+		if(i % TACHE_A_WORK == 0)
+			waitfornticks(TACHE_A_SLEEP);
 	}
 }
 
@@ -173,6 +176,6 @@ int main() {
 
 	fifogen_init(&fifo_messages, NB_MESSAGES);
 
-	start(tacheMAIN);
+	start(tacheMAIN, 7);
 	return(0);
 }

@@ -9,6 +9,7 @@ C_SRCS += \
 ../noyau.c \
 ../noyau_file.c \
 ../noyau_test.c \
+../priosys.c \
 ../serialio.c \
 ../utils.c \
 ../versatile_interrupt.c \
@@ -25,6 +26,7 @@ OBJS += \
 ./noyau.o \
 ./noyau_file.o \
 ./noyau_test.o \
+./priosys.o \
 ./serialio.o \
 ./utils.o \
 ./versatile_interrupt.o \
@@ -37,6 +39,7 @@ C_DEPS += \
 ./noyau.d \
 ./noyau_file.d \
 ./noyau_test.d \
+./priosys.d \
 ./serialio.d \
 ./utils.d \
 ./versatile_interrupt.d \

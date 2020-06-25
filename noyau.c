@@ -10,6 +10,7 @@
 #include "versatile_interrupt.h"
 #include "noyau.h"
 #include "utils.h"
+#include "priosys.h"
 
 /*----------------------------------------------------------------------------*
  * variables internes du noyau                                                *
@@ -18,20 +19,24 @@
 /*
  * compteur d'activation de chaque tache
  */
-static int compteurs[MAX_TACHES];
+static int compteurs[NB_TACHES];
+
 /*
  * tableau stockant le contexte de chaque tache
  */
-CONTEXTE _contexte[MAX_TACHES];
+CONTEXTE _contexte[NB_TACHES];
+
 /*
  * numero de la tache en train d'etre executee
  */
 volatile uint16_t _tache_c;
+
 /*
  * mémorisation de l'adresse du sommet de la pile après chaque allocation d'un
  * espace de pile à une tâche
  */
 uint32_t _tos;
+
 /*
  * variable d'acquittement du timer
  * = 1 s'il faut acquitter le timer
@@ -62,8 +67,9 @@ void noyau_exit(void) {
     _irq_disable_();
     /* affichage du nombre d'activation de chaque tache !*/
     int j;
-    for (j = 0; j < MAX_TACHES; j++)
-        printf("\nActivations tache %d : %d", j, compteurs[j]);
+    for (j = 0; j < NB_TACHES; j++)
+    	if(compteurs[j] != 0)
+    		printf("\nActivations tache %d : %d", j, compteurs[j]);
     /* Que faire quand on termine l'execution du noyau ? */
 
     for (;;);
@@ -82,7 +88,7 @@ void fin_tache(void) {
     _irq_disable_();
     /* la tache est enlevee de la file des taches */
     _contexte[_tache_c].status = CREE;
-    file_retire(_tache_c);
+    priosys_remove_task(_tache_c);
     schedule();
 }
 
@@ -92,17 +98,17 @@ void fin_tache(void) {
  * sortie : sans
  * description : active la tache et lance le scheduler
  */
-void start(TACHE_ADR adr_tache) {
+void start(TACHE_ADR adr_tache, uint16_t prio) {
     short j;
     register unsigned int sp asm("sp");
     /* initialisation de l'etat des taches */
-    for (j = 0; j < MAX_TACHES; j++) {
+    for (j = 0; j < NB_TACHES; j++) {
         _contexte[j].status = NCREE;
     }
     /* initialisation de la tache courante */
     _tache_c = 0;
     /* initialisation de la file noyau et de la file d'attente nticks*/
-    file_init();
+    priosys_init();
     waitfile_init();
     /* initialisation du sommet de la pile */
     _tos = sp;
@@ -119,7 +125,7 @@ void start(TACHE_ADR adr_tache) {
     /* initialisation de l'AITC */
     interrupt_enable(4);
     /* creation et activation de la premiere tache */
-    active(cree(adr_tache));
+    active(cree(adr_tache, prio));
 }
 
 /*
@@ -129,17 +135,15 @@ void start(TACHE_ADR adr_tache) {
  * description : la tache est creee en lui allouant une pile et un numero
  *               en cas d'erreur, le noyau doit etre arrete
  */
-uint16_t cree(TACHE_ADR adr_tache) {
+uint16_t cree(TACHE_ADR adr_tache, uint16_t prio) {
     /* pointeur d'une case de _contexte */
     CONTEXTE *p;
-    /* numero de la derniere tache creee */
-    static uint16_t tache = -1;
     /* debut section critique */
     _lock_();
     /* generation du numero de la tache suivante */
-    tache++;
-    /* arret du noyau si plus de  MAX_TACHES*/
-    if (tache >= MAX_TACHES) {
+    uint16_t tache = priosys_generate_next_identity(prio);
+    /* arret du noyau si plus de  NB_TACHES*/
+    if (tache >= NB_TACHES) {
         noyau_exit();
     }
     /* creation du contexte de la nouvelle tache */
@@ -179,7 +183,7 @@ void active(uint16_t tache) {
         /* mise a jour de l'etat de la tache a PRET */
         p->status = PRET;
         /* ajoute la tache a la file des taches eligibles */
-        file_ajoute(tache);
+        priosys_add_task(tache);
         /* lancement du scheduler */
         schedule();
     }
@@ -228,7 +232,7 @@ void schedule(void) {
 void dort(void) {
     _lock_();
     _contexte[_tache_c].status = SUSP;
-    file_retire(_tache_c);
+    priosys_remove_task(_tache_c);
     schedule();
     _unlock_();
 }
@@ -259,7 +263,7 @@ void reveille(uint16_t t) {
     _lock_();
     if (p->status == SUSP) {
         p->status = EXEC;
-        file_ajoute(t);
+        priosys_add_task(t);
     }
     _unlock_();
 }
@@ -300,9 +304,10 @@ void __attribute__((naked)) scheduler(void) {
        actuelle du pointeur de pile */
     _contexte[_tache_c].sp_irq = sp;
     /* recherche la prochaine tache a executer */
-    _tache_c = file_suivant();
+    _tache_c = priosys_next();
+    printf("[Switch id=%d]\n", _tache_c);
     /* verifie qu'une tache suivante existe, sinon arret du noyau */
-    if (_tache_c == F_VIDE) {
+    if (_tache_c == NB_TACHES) {
         printf("Plus rien à ordonnancer.\n");
         noyau_exit();
     }

@@ -23,6 +23,11 @@
  */
 #define F_VIDE      MAX_TACHES
 
+typedef struct {
+	uint16_t _queue;
+    uint16_t _file[MAX_TACHES];
+} FIFO_NOYAU;
+
 
 
 /*----------------------------------------------------------------------------*
@@ -30,12 +35,13 @@
  * voir le fichier noyau_file.c pour avoir le comportement des fonctions      *
  *----------------------------------------------------------------------------*/
 
-void file_init(void);
-void file_ajoute(uint16_t n);
-void file_retire(uint16_t t);
-uint16_t file_suivant(void);
-void file_affiche_queue(void);
-void file_affiche(void);
+void file_init(FIFO_NOYAU *f);
+void file_ajoute(FIFO_NOYAU *f, uint16_t n);
+void file_retire(FIFO_NOYAU *f, uint16_t t);
+int file_vide(FIFO_NOYAU *f);
+uint16_t file_suivant(FIFO_NOYAU *f);
+void file_affiche_queue(FIFO_NOYAU *f);
+void file_affiche(FIFO_NOYAU *f);
 
 
 #endif //__NOYAU_FILE_H__

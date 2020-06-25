@@ -10,6 +10,7 @@
 
 #include <stdint.h>
 #include "noyau_file.h"
+#include "priosys.h"
 
 /*----------------------------------------------------------------------------*
  * declaration des constantes                                                 *
@@ -136,7 +137,7 @@ typedef struct {
 /*----------------------------------------------------------------------------*
  * declaration des variables                                                 *
  *----------------------------------------------------------------------------*/
-extern CONTEXTE _contexte[MAX_TACHES];
+extern CONTEXTE _contexte[NB_TACHES];
 extern int16_t flag_tache_vide;
 
 /*----------------------------------------------------------------------------*
@@ -145,10 +146,10 @@ extern int16_t flag_tache_vide;
 
 void 		noyau_exit(void);
 void 		fin_tache(void);
-uint16_t 	cree(TACHE_ADR adr_tache);
+uint16_t 	cree(TACHE_ADR adr_tache, uint16_t prio);
 void 		active(uint16_t tache);
 void 		schedule(void);
-void 		start(TACHE_ADR adr_tache);
+void 		start(TACHE_ADR adr_tache, uint16_t prio);
 void 		dort(void);
 void 		reveille(uint16_t tache);
 uint16_t 	noyau_get_tc(void);

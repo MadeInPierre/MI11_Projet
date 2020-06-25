@@ -24,14 +24,14 @@
  * indice = numero de tache
  * valeur = tache suivante
  */
-static uint16_t _file[MAX_TACHES];
+//static uint16_t _file[MAX_TACHES];
 
 /*
  * index de queue
  * valeur de l'index de la tache en cours d'execution
  * pointe sur la prochaine tache a activer
  */
-static uint16_t _queue;
+//static uint16_t _queue;
 
 /*----------------------------------------------------------------------------*
  * fonctions de gestion de la file                                            *
@@ -43,8 +43,8 @@ static uint16_t _queue;
  * sortie : sans
  * description : la queue est initialisee à une valeur de tache impossible
  */
-void file_init(void) {
-    _queue = F_VIDE;
+void file_init(FIFO_NOYAU *f) {
+    f->_queue = F_VIDE;
 }
 
 /*
@@ -53,15 +53,15 @@ void file_init(void) {
  * sortie : sans
  * description : ajoute la tache n en fin de file
  */
-void file_ajoute(uint16_t n) {
-    if (_queue == F_VIDE) {
-        _file[n] = n;
+void file_ajoute(FIFO_NOYAU *f, uint16_t n) {
+    if (f->_queue == F_VIDE) {
+    	f->_file[n] = n;
     } else {
-        _file[n] = _file[_queue];
-        _file[_queue] = n;
+    	f->_file[n] = f->_file[f->_queue];
+    	f->_file[f->_queue] = n;
     }
 
-    _queue = n;
+    f->_queue = n;
 }
 
 /*
@@ -71,23 +71,27 @@ void file_ajoute(uint16_t n) {
  * description : retire la tache t de la file. L'ordre de la file n'est pas
                  modifie
  */
-void file_retire(uint16_t t) {
-    if (_queue == _file[_queue]) {
-        _queue = F_VIDE;
+void file_retire(FIFO_NOYAU *f, uint16_t t) {
+    if (f->_queue == f->_file[f->_queue]) {
+    	f->_queue = F_VIDE;
     } else {
-        if (t == _queue) {
-            _queue = _file[_queue];
-            while (_file[_queue] != t) {
-                _queue = _file[_queue];
+        if (t == f->_queue) {
+        	f->_queue = f->_file[f->_queue];
+            while (f->_file[f->_queue] != t) {
+            	f->_queue = f->_file[f->_queue];
             }
-            _file[_queue] = _file[t];
+            f->_file[f->_queue] = f->_file[t];
         } else {
-            while (_file[_queue] != t) {
-                _queue = _file[_queue];
+            while (f->_file[f->_queue] != t) {
+            	f->_queue = f->_file[f->_queue];
             }
-            _file[_queue] = _file[_file[_queue]];
+            f->_file[f->_queue] = f->_file[f->_file[f->_queue]];
         }
     }
+}
+
+int file_vide(FIFO_NOYAU *f) {
+	return (f->_queue == F_VIDE) ? 1 : 0;
 }
 
 /*
@@ -96,11 +100,11 @@ void file_retire(uint16_t t) {
  * sortie : numero de la tache a activer
  * description : queue pointe sur la tache suivante
  */
-uint16_t file_suivant(void) {
-    if (_queue != F_VIDE) {
-        _queue = _file[_queue];
+uint16_t file_suivant(FIFO_NOYAU *f) {
+    if (f->_queue != F_VIDE) {
+    	f->_queue = f->_file[f->_queue];
     }
-    return (_queue);
+    return (f->_queue);
 }
 
 /*
@@ -109,8 +113,8 @@ uint16_t file_suivant(void) {
  * sortie : sans
  * description : affiche la valeur de queue
  */
-void file_affiche_queue() {
-    printf("_queue = %d\n", _queue);
+void file_affiche_queue(FIFO_NOYAU *f) {
+    printf("_queue = %d\n", f->_queue);
 }
 
 /*
@@ -119,7 +123,7 @@ void file_affiche_queue() {
  * sortie : sans
  * description : affiche les valeurs de la file
  */
-void file_affiche() {
+void file_affiche(FIFO_NOYAU *f) {
     int i;
 
     printf("Tache   | ");
@@ -129,7 +133,7 @@ void file_affiche() {
 
     printf("\nSuivant | ");
     for (i = 0; i < MAX_TACHES; i++) {
-        printf("%03d | ", _file[i]);
+        printf("%03d | ", f->_file[i]);
     }
     printf("\n");
 }

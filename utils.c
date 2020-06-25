@@ -13,14 +13,14 @@
 #include "utils.h"
 
 // Tableau de gestion des tâches endormies sur attente passive
-uint16_t _wait_file[MAX_TACHES];
+uint16_t _wait_file[NB_TACHES];
 
 void waitfile_init(void)
 {
 	uint16_t i;
 
-	for(i=0; i< MAX_TACHES; i++){
-		_wait_file[i] = MAX_TACHES;
+	for(i=0; i < NB_TACHES; i++){
+		_wait_file[i] = NB_TACHES;
 	}
 }
 
@@ -43,10 +43,10 @@ void waitfile_process(void)
 {
 	uint16_t i;
 
-	for(i=0; i< MAX_TACHES; i++){
-		if (_wait_file[i] != MAX_TACHES){
+	for(i = 0; i < NB_TACHES; i++){
+		if (_wait_file[i] != NB_TACHES){
 			if (i != _wait_file[i]){
-				printf("Sortie sur waitfile_treat\n");
+				printf("Sortie sur waitfile_treat %d %d\n", i, _wait_file[i]);
 				noyau_exit();
 			}
 			else {
@@ -58,9 +58,9 @@ void waitfile_process(void)
 					_lock_();
 					if (_contexte[i].status == SUSP) {
 						_contexte[i].status = EXEC;
-						file_ajoute(i);
+						priosys_add_task(i);
 					}
-					_wait_file[i] = MAX_TACHES;
+					_wait_file[i] = NB_TACHES;
 				}
 			}
 		}
