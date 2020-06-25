@@ -90,6 +90,12 @@ void file_retire(FIFO_NOYAU *f, uint16_t t) {
     }
 }
 
+/*
+ * donne l'etat de la file, vide ou non
+ * entre  : sans
+ * sortie : 1 si la tâche est vide, 0 sinon
+ * description : test file vide
+ */
 int file_vide(FIFO_NOYAU *f) {
 	return (f->_queue == F_VIDE) ? 1 : 0;
 }

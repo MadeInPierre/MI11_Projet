@@ -43,9 +43,9 @@ FIFO_GEN fifo_messages;
 
 char messages[NB_MESSAGES*TAILLE_MESSAGE];
 
-
-// Helper function used to append a message log when
-// the caller task is executed.
+// Fonction d'aide permettant d'ajouter un message à
+// imprimer par la tâche de fond. Imprime l'id de la
+// tâche et une couleur propre.
 void tache_msg(uint16_t *idx, uint16_t color, char* name, int i) {
 	static char temp_string[100];
 	uint16_t b_idx = *idx;
@@ -57,9 +57,9 @@ void tache_msg(uint16_t *idx, uint16_t color, char* name, int i) {
 		i_to_a10 (color,temp_string);
 		str_cat(&messages[b_idx*TAILLE_MESSAGE], temp_string);
 		str_cat(&messages[b_idx*TAILLE_MESSAGE], "m ");
-		str_cat(&messages[b_idx*TAILLE_MESSAGE], name);
-		//		i_to_a10 (i,temp_string);
-		//		str_cat(&messages[b_idx*TAILLE_MESSAGE], temp_string);
+//		str_cat(&messages[b_idx*TAILLE_MESSAGE], name);
+		i_to_a10(noyau_get_tc(),temp_string);
+		str_cat(&messages[b_idx*TAILLE_MESSAGE], temp_string);
 		str_cat(&messages[b_idx*TAILLE_MESSAGE], CODE_RESET_COLOR);
 	}
 	*idx = b_idx;
@@ -69,9 +69,12 @@ void tache_msg(uint16_t *idx, uint16_t color, char* name, int i) {
 
 TACHE tacheMAIN(void) {
 	uint16_t idx;
-	char temp_string[100];
 
 	puts("------> EXEC tache M");
+	puts("\n\n*******************************");
+	puts("*     Pierre LACLAU, GI04     *");
+	puts("*******************************\n\n");
+
 	active(cree(tacheA, 1));
 	active(cree(tacheB, 2));
 	active(cree(tacheC, 2));
@@ -87,19 +90,8 @@ TACHE tacheMAIN(void) {
 		_unlock_();
 
 		while(flag_tache_vide != 0){
-			_lock_();
-			if(fifogen_get(&fifo_messages, &idx) != 0){
-				messages[idx*TAILLE_MESSAGE] = '\0';
-				str_cat(&messages[idx*TAILLE_MESSAGE], CODE_BACKGROUND_COLOR);
-				i_to_a10 (16,temp_string);
-				str_cat(&messages[idx*TAILLE_MESSAGE], temp_string);
-				str_cat(&messages[idx*TAILLE_MESSAGE], "m M");
-//				i_to_a10 (idx,temp_string);
-//				str_cat(&messages[idx*TAILLE_MESSAGE], temp_string);
-				str_cat(&messages[idx*TAILLE_MESSAGE], CODE_RESET_COLOR);
-			}
+			tache_msg(&idx, 16, "M", idx);
 			flag_tache_vide = 0;
-			_unlock_();
 		}
 	}
 }
@@ -117,9 +109,6 @@ TACHE tacheA(void) {
 
 		if(i % TACHE_A_WORK == 0)
 			waitfornticks(TACHE_A_SLEEP);
-
-//		tache_msg(&idx, 39, "A", i++);
-//		waitfornticks((i % TACHE_A_WORK == 0) ? TACHE_A_SLEEP : 1);
 	}
 }
 
@@ -136,9 +125,6 @@ TACHE tacheB(void) {
 
 		if(i % TACHE_B_WORK == 0)
 			waitfornticks(TACHE_B_SLEEP);
-
-//		tache_msg(&idx, 88, "B", i++);
-//		waitfornticks((i % TACHE_B_WORK == 0) ? TACHE_B_SLEEP : 1);
 	}
 }
 
@@ -155,9 +141,6 @@ TACHE tacheC(void) {
 
 		if(i % TACHE_C_WORK == 0)
 			waitfornticks(TACHE_C_SLEEP);
-
-//		tache_msg(&idx, 53, "C", i++);
-//		waitfornticks((i % TACHE_C_WORK == 0) ? TACHE_C_SLEEP : 1);
 	}
 }
 
@@ -174,9 +157,6 @@ TACHE tacheD(void) {
 
 		if(i % TACHE_D_WORK == 0)
 			waitfornticks(TACHE_D_SLEEP);
-
-//		tache_msg(&idx, 21, "D", i++);
-//		waitfornticks((i % TACHE_D_WORK == 0) ? TACHE_D_SLEEP : 1);
 
 		if (i==300) noyau_exit();
 	}
@@ -195,9 +175,6 @@ TACHE tacheE(void) {
 
 		if(i % TACHE_E_WORK == 0)
 			waitfornticks(TACHE_E_SLEEP);
-
-//		tache_msg(&idx, 142, "E", i++);
-//		waitfornticks((i % TACHE_E_WORK == 0) ? TACHE_E_SLEEP : 1);
 	}
 }
 

@@ -23,6 +23,10 @@
  */
 #define F_VIDE      NFILE_MAX_TACHES
 
+
+/*
+ * Structure de déclaration d'une file. Plusieurs files peuvent être créées.
+ */
 typedef struct {
 	uint16_t _queue;
     uint16_t _file[NFILE_MAX_TACHES];
