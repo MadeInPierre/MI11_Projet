@@ -19,7 +19,7 @@ void fifogen_init(FIFO_GEN *f, uint16_t Nb_ptr)
 		f->tab[i] = TAILLE_FIFO_GEN;
 }
 
-uint8_t fifogen_add(FIFO_GEN *f, uint16_t* idx)
+uint8_t fifogen_get(FIFO_GEN *f, uint16_t* idx)
 {
 	if (f->fifo_taille >= f->Nb_ptr) // @suppress("Symbol is not resolved")
 	{
@@ -27,7 +27,7 @@ uint8_t fifogen_add(FIFO_GEN *f, uint16_t* idx)
 	}
 
 	f->tab[f->fifo_queue] = f->fifo_queue;
-	*idx = (uint16_t)f->tab[f->fifo_queue];
+	*idx = (uint16_t) f->tab[f->fifo_queue];
 	f->fifo_queue++;
 	if (f->fifo_queue >= f->Nb_ptr)
 		f->fifo_queue = 0;
@@ -35,19 +35,19 @@ uint8_t fifogen_add(FIFO_GEN *f, uint16_t* idx)
 	return(-1);
 }
 
-uint8_t fifogen_pop(FIFO_GEN *f, uint16_t* idx)
+uint8_t fifogen_put(FIFO_GEN *f, uint16_t* idx)
 {
 	if (f->fifo_taille == 0)
 	{
 		return(0);
 	}
-
+	
 	*idx = (uint16_t) f->tab[f->fifo_tete];
 	f->tab[f->fifo_tete] = TAILLE_FIFO_GEN;
 	f->fifo_tete++;
 	if (f->fifo_tete >= f->Nb_ptr)
 		f->fifo_tete = 0;
-	f->fifo_taille--;
+  	f->fifo_taille--;
 	return(-1);
 }
 

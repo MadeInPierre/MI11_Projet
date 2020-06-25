@@ -19,7 +19,7 @@ void waitfile_init(void)
 {
 	uint16_t i;
 
-	for(i=0; i < NB_TACHES; i++){
+	for(i=0; i< NB_TACHES; i++){
 		_wait_file[i] = NB_TACHES;
 	}
 }
@@ -43,23 +43,23 @@ void waitfile_process(void)
 {
 	uint16_t i;
 
-	for(i = 0; i < NB_TACHES; i++){
+	for(i=0; i< NB_TACHES; i++){
 		if (_wait_file[i] != NB_TACHES){
 			if (i != _wait_file[i]){
-				printf("Sortie sur waitfile_treat %d %d\n", i, _wait_file[i]);
+				printf("Sortie sur waitfile_treat\n");
 				noyau_exit();
 			}
 			else {
 				_contexte[i].cmpt--;
 				if (_contexte[i].cmpt == 0){
 					if (_contexte[i].status == NCREE) {
-						noyau_exit();
-					}
-					_lock_();
-					if (_contexte[i].status == SUSP) {
-						_contexte[i].status = EXEC;
-						priosys_add_task(i);
-					}
+					        noyau_exit();
+					    }
+					    _lock_();
+					    if (_contexte[i].status == SUSP) {
+					    	_contexte[i].status = EXEC;
+					        priosys_add_task(i);
+					    }
 					_wait_file[i] = NB_TACHES;
 				}
 			}
@@ -71,15 +71,15 @@ void str_cat(char* str1, char* str2)
 {
 	uint16_t i, j;
 
-	// Pour itérer la première chaîne du début à la fin
-	for (i = 0; str1[i]!='\0'; i++);
+	  // Pour itérer la première chaîne du début à la fin
+	  for (i = 0; str1[i]!='\0'; i++);
 
-	// Concaténer Str2 dans Str1
-	for (j = 0; str2[j]!='\0'; j++, i++)
-	{
-		str1[i] = str2[j];
-	}
-	str1[i] = '\0';
+	  // Concaténer Str2 dans Str1
+	  for (j = 0; str2[j]!='\0'; j++, i++)
+	  {
+	     str1[i] = str2[j];
+	  }
+	  str1[i] = '\0';
 }
 
 void i_to_a10 (int16_t Nb, char* str)
@@ -94,9 +94,9 @@ void i_to_a10 (int16_t Nb, char* str)
 	}
 	temp = Nb;
 	do {
-		str_temp[i] = (char) (temp%10+0x30);
-		temp = temp/10;
-		i++;
+			str_temp[i] = (char) (temp%10+0x30);
+			temp = temp/10;
+			i++;
 	} while(temp != 0);
 
 	j = 0;
@@ -105,10 +105,10 @@ void i_to_a10 (int16_t Nb, char* str)
 			str[j] = '-';
 			j++;
 		}
-		str[j] = str_temp[i-1];
-		j++;
-		i--;
-	} while(i != 0);
+			str[j] = str_temp[i-1];
+			j++;
+			i--;
+		} while(i != 0);
 	str[j] = '\0';
 
 }

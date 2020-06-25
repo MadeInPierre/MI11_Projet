@@ -127,12 +127,12 @@ void file_affiche(FIFO_NOYAU *f) {
     int i;
 
     printf("Tache   | ");
-    for (i = 0; i < MAX_TACHES; i++) {
+    for (i = 0; i < NFILE_MAX_TACHES; i++) {
         printf("%03d | ", i);
     }
 
     printf("\nSuivant | ");
-    for (i = 0; i < MAX_TACHES; i++) {
+    for (i = 0; i < NFILE_MAX_TACHES; i++) {
         printf("%03d | ", f->_file[i]);
     }
     printf("\n");

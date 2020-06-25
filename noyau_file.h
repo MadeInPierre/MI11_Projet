@@ -16,16 +16,16 @@
 /*
  * nombre maximum de taches dans le systeme
  */
-#define MAX_TACHES  8
+#define NFILE_MAX_TACHES  8
 /*
  * numero de tache impossible, utilise pour savoir si la file est initialisee
  * ou non
  */
-#define F_VIDE      MAX_TACHES
+#define F_VIDE      NFILE_MAX_TACHES
 
 typedef struct {
 	uint16_t _queue;
-    uint16_t _file[MAX_TACHES];
+    uint16_t _file[NFILE_MAX_TACHES];
 } FIFO_NOYAU;
 
 

@@ -10,7 +10,7 @@
 #include "versatile_interrupt.h"
 #include "noyau.h"
 #include "utils.h"
-#include "priosys.h"
+#include "priosys.h"*
 
 /*----------------------------------------------------------------------------*
  * variables internes du noyau                                                *
@@ -20,23 +20,19 @@
  * compteur d'activation de chaque tache
  */
 static int compteurs[NB_TACHES];
-
 /*
  * tableau stockant le contexte de chaque tache
  */
 CONTEXTE _contexte[NB_TACHES];
-
 /*
  * numero de la tache en train d'etre executee
  */
 volatile uint16_t _tache_c;
-
 /*
  * mémorisation de l'adresse du sommet de la pile après chaque allocation d'un
  * espace de pile à une tâche
  */
 uint32_t _tos;
-
 /*
  * variable d'acquittement du timer
  * = 1 s'il faut acquitter le timer
@@ -62,17 +58,16 @@ int16_t flag_tache_vide;
  *               instruction vide
  */
 void noyau_exit(void) {
-    printf("Sortie du noyau\n");
-    /* desactivation des interruptions */
-    _irq_disable_();
-    /* affichage du nombre d'activation de chaque tache !*/
-    int j;
-    for (j = 0; j < NB_TACHES; j++)
-    	if(compteurs[j] != 0)
-    		printf("\nActivations tache %d : %d", j, compteurs[j]);
-    /* Que faire quand on termine l'execution du noyau ? */
-
-    for (;;);
+	printf("\nSortie du noyau\n");
+	/* desactivation des interruptions */
+	_irq_disable_();
+	/* affichage du nombre d'activation de chaque tache !*/
+	int j;
+	for (j = 0; j < NB_TACHES; j++)
+		if(compteurs[j])
+			printf("Activations tache %d : %d\n", j, compteurs[j]);
+	/* Que faire quand on termine l'execution du noyau ? */
+	for (;;);
 }
 
 /*
@@ -84,12 +79,12 @@ void noyau_exit(void) {
  *               cette fonction doit etre appelee a la fin de chaque tache
  */
 void fin_tache(void) {
-    /* on interdit les interruptions */
-    _irq_disable_();
-    /* la tache est enlevee de la file des taches */
-    _contexte[_tache_c].status = CREE;
-    priosys_remove_task(_tache_c);
-    schedule();
+	/* on interdit les interruptions */
+	_irq_disable_();
+	/* la tache est enlevee de la file des taches */
+	_contexte[_tache_c].status = CREE;
+	priosys_remove_task(_tache_c);
+	schedule();
 }
 
 /*
@@ -99,33 +94,33 @@ void fin_tache(void) {
  * description : active la tache et lance le scheduler
  */
 void start(TACHE_ADR adr_tache, uint16_t prio) {
-    short j;
-    register unsigned int sp asm("sp");
-    /* initialisation de l'etat des taches */
-    for (j = 0; j < NB_TACHES; j++) {
-        _contexte[j].status = NCREE;
-    }
-    /* initialisation de la tache courante */
-    _tache_c = 0;
-    /* initialisation de la file noyau et de la file d'attente nticks*/
-    priosys_init();
-    waitfile_init();
-    /* initialisation du sommet de la pile */
-    _tos = sp;
-    /* passage en mode IRG */
-    _set_arm_mode_(ARMMODE_IRQ);
-    /* initialisation du pointeur de pile */
-    sp = _tos;
-    /* passage en mode SYS */
-    _set_arm_mode_(ARMMODE_SYS);
-    /* on interdit les interruptions */
-    _irq_disable_();
-    /* initialisation du timer a 100 Hz soit une période de 5ms */
-    timer_priodic_setup(0, Period_5ms);
-    /* initialisation de l'AITC */
-    interrupt_enable(4);
-    /* creation et activation de la premiere tache */
-    active(cree(adr_tache, prio));
+	short j;
+	register unsigned int sp asm("sp");
+	/* initialisation de l'etat des taches */
+	for (j = 0; j < NB_TACHES; j++) {
+		_contexte[j].status = NCREE;
+	}
+	/* initialisation de la tache courante */
+	_tache_c = 0;
+	/* initialisation de la file noyau et de la file d'attente nticks*/
+	priosys_init();
+	waitfile_init();
+	/* initialisation du sommet de la pile */
+	_tos = sp;
+	/* passage en mode IRG */
+	_set_arm_mode_(ARMMODE_IRQ);
+	/* initialisation du pointeur de pile */
+	sp = _tos;
+	/* passage en mode SYS */
+	_set_arm_mode_(ARMMODE_SYS);
+	/* on interdit les interruptions */
+	_irq_disable_();
+	/* initialisation du timer a 100 Hz soit une période de 5ms */
+	timer_priodic_setup(0, Period_5ms);
+	/* initialisation de l'AITC */
+	interrupt_enable(4);
+	/* creation et activation de la premiere tache */
+	active(cree(adr_tache, prio));
 }
 
 /*
@@ -136,30 +131,30 @@ void start(TACHE_ADR adr_tache, uint16_t prio) {
  *               en cas d'erreur, le noyau doit etre arrete
  */
 uint16_t cree(TACHE_ADR adr_tache, uint16_t prio) {
-    /* pointeur d'une case de _contexte */
-    CONTEXTE *p;
-    /* debut section critique */
-    _lock_();
-    /* generation du numero de la tache suivante */
-    uint16_t tache = priosys_generate_next_identity(prio);
-    /* arret du noyau si plus de  NB_TACHES*/
-    if (tache >= NB_TACHES) {
-        noyau_exit();
-    }
-    /* creation du contexte de la nouvelle tache */
-    p = &_contexte[tache];
-    /* allocation d'une pile a la tache */
-    p->sp_ini = _tos;
-    /* decrementation du pointeur de pile general, afin que la prochaine tache
-     * n'utilise pas la pile allouee pour la tache courante */
-    _tos -= PILE_TACHE + PILE_IRQ;
-    /* fin section critique */
-    _unlock_();
-    /* memorisation de l'adresse de debut de la tache */
-    p->tache_adr = adr_tache;
-    /* mise a jour de l'etat de la tache a CREE */
-    p->status = CREE;
-    return (tache);
+	/* pointeur d'une case de _contexte */
+	CONTEXTE *p;
+	/* generation du numero de la tache suivante */
+	uint16_t tache = priosys_generate_next_identity(prio);
+	/* debut section critique */
+	_lock_();
+	/* arret du noyau si plus de  MAX_TACHES*/
+	if (tache >= NB_TACHES) {
+		noyau_exit();
+	}
+	/* creation du contexte de la nouvelle tache */
+	p = &_contexte[tache];
+	/* allocation d'une pile a la tache */
+	p->sp_ini = _tos;
+	/* decrementation du pointeur de pile general, afin que la prochaine tache
+	 * n'utilise pas la pile allouee pour la tache courante */
+	_tos -= PILE_TACHE + PILE_IRQ;
+	/* fin section critique */
+	_unlock_();
+	/* memorisation de l'adresse de debut de la tache */
+	p->tache_adr = adr_tache;
+	/* mise a jour de l'etat de la tache a CREE */
+	p->status = CREE;
+	return (tache);
 }
 
 /*
@@ -170,25 +165,25 @@ uint16_t cree(TACHE_ADR adr_tache, uint16_t prio) {
  *               en cas d'erreur, le noyau doit etre arrete
  */
 void active(uint16_t tache) {
-    /* acces au contexte de la tache */
-    CONTEXTE *p = &_contexte[tache];
-    /* verifie que la tache n'est pas dans l'etat NCREE, sinon arrete le noyau*/
-    if (p->status == NCREE) {
-        noyau_exit();
-    }
-    /* debut section critique */
-    _lock_();
-    /* activation de la tache seulement si elle a ete creee */
-    if (p->status == CREE) {
-        /* mise a jour de l'etat de la tache a PRET */
-        p->status = PRET;
-        /* ajoute la tache a la file des taches eligibles */
-        priosys_add_task(tache);
-        /* lancement du scheduler */
-        schedule();
-    }
-    /* fin section critique */
-    _unlock_();
+	/* acces au contexte de la tache */
+	CONTEXTE *p = &_contexte[tache];
+	/* verifie que la tache n'est pas dans l'etat NCREE, sinon arrete le noyau*/
+	if (p->status == NCREE) {
+		noyau_exit();
+	}
+	/* debut section critique */
+	_lock_();
+	/* activation de la tache seulement si elle a ete creee */
+	if (p->status == CREE) {
+		/* mise a jour de l'etat de la tache a PRET */
+		p->status = PRET;
+		/* ajoute la tache a la file des taches eligibles */
+		priosys_add_task(tache);
+		/* lancement du scheduler */
+		schedule();
+	}
+	/* fin section critique */
+	_unlock_();
 }
 
 /*
@@ -198,27 +193,27 @@ void active(uint16_t tache) {
  * description : provoque une commutation de tache
  */
 void schedule(void) {
-    /* debut section critique */
-    _lock_();
-    /* on simule une exception irq pour forcer un appel correct au scheduler */
-    /* remise a zero de l'aquittement du timer */
-    _ack_timer = 0;
-    /* passage en mode d'exception IRQ */
-    _set_arm_mode_(ARMMODE_IRQ);
-    /* code assembleur pour simuler une interruption */
-    __asm__ __volatile__(
-            /* sauvegarde de cpsr dans spsr */
-            "mrs  r0, cpsr\t\n"
-            "msr  spsr, r0\t\n"
-            /* sauvegarde de pc dans lr an ajustant sa valeur */
-            "add  lr, pc, #4\t\n"
-            /* saut au scheduler */
-            "b    scheduler\t\n"
-    );
-    /* passage en mode system */
-    _set_arm_mode_(ARMMODE_SYS);
-    /* fin de section critique */
-    _unlock_();
+	/* debut section critique */
+	_lock_();
+	/* on simule une exception irq pour forcer un appel correct au scheduler */
+	/* remise a zero de l'aquittement du timer */
+	_ack_timer = 0;
+	/* passage en mode d'exception IRQ */
+	_set_arm_mode_(ARMMODE_IRQ);
+	/* code assembleur pour simuler une interruption */
+	__asm__ __volatile__(
+			/* sauvegarde de cpsr dans spsr */
+			"mrs  r0, cpsr\t\n"
+			"msr  spsr, r0\t\n"
+			/* sauvegarde de pc dans lr an ajustant sa valeur */
+			"add  lr, pc, #4\t\n"
+			/* saut au scheduler */
+			"b    scheduler\t\n"
+	);
+	/* passage en mode system */
+	_set_arm_mode_(ARMMODE_SYS);
+	/* fin de section critique */
+	_unlock_();
 }
 
 
@@ -230,11 +225,11 @@ void schedule(void) {
  *               tache
  */
 void dort(void) {
-    _lock_();
-    _contexte[_tache_c].status = SUSP;
-    priosys_remove_task(_tache_c);
-    schedule();
-    _unlock_();
+	_lock_();
+	_contexte[_tache_c].status = SUSP;
+	priosys_remove_task(_tache_c);
+	schedule();
+	_unlock_();
 }
 
 /*
@@ -255,17 +250,17 @@ uint16_t 	noyau_get_tc(void){
  *               en cas d'erreur, le noyau doit etre arrete
  */
 void reveille(uint16_t t) {
-    CONTEXTE *p;
-    p = &_contexte[t];
-    if (p->status == NCREE) {
-        noyau_exit();
-    }
-    _lock_();
-    if (p->status == SUSP) {
-        p->status = EXEC;
-        priosys_add_task(t);
-    }
-    _unlock_();
+	CONTEXTE *p;
+	p = &_contexte[t];
+	if (p->status == NCREE) {
+		noyau_exit();
+	}
+	_lock_();
+	if (p->status == SUSP) {
+		p->status = EXEC;
+		priosys_add_task(t);
+	}
+	_unlock_();
 }
 
 /*-----------------------------------------------------------------------------*
@@ -275,81 +270,80 @@ void reveille(uint16_t t) {
  *  !! Pas d'appel direct ! Utiliser schedule pour provoquer une commutation !!*
  *----------------------------------------------------------------------------*/
 void __attribute__((naked)) scheduler(void) {
-    register CONTEXTE *p;
-    /* pointeur de pile */
-    register unsigned int sp asm("sp");
-    /* sauvegarde le contexte complet sur la pile IRQ de la tache courante */
-    __asm__ __volatile__(
-            /* sauvegarde des registres du mode system */
-            "stmfd  sp, {r0-r14}^\t\n"
-            /* attente d'un cycle pour eviter d'ecraser des donnees */
-            "nop\t\n"
-            /* ajustement du pointeur de pile  IRQ*/
-            "sub    sp, sp, #60\t\n"
-            /* sauvegarde du contexte spsr et de lr sur la pile */
-            "mrs    r0, spsr\t\n"
-            "stmfd  sp!, {r0, lr}\t\n"
-    );
-    /* reinitialisation du timer si necessaire */
-    if (_ack_timer) {
-    	// on traite les taches en attentes sur ntiks
-    	waitfile_process();
-    	// on autorise la tache vide (0) a ecrire
-    	flag_tache_vide = 1;
-        timer_int_clear(0);
-    } else {
-        _ack_timer = 1;
-    }
-    /* initialise le pointeur de pile IRQ de la tache courante a la position
+	register CONTEXTE *p;
+	/* pointeur de pile */
+	register unsigned int sp asm("sp");
+	/* sauvegarde le contexte complet sur la pile IRQ de la tache courante */
+	__asm__ __volatile__(
+			/* sauvegarde des registres du mode system */
+			"stmfd  sp, {r0-r14}^\t\n"
+			/* attente d'un cycle pour eviter d'ecraser des donnees */
+			"nop\t\n"
+			/* ajustement du pointeur de pile  IRQ*/
+			"sub    sp, sp, #60\t\n"
+			/* sauvegarde du contexte spsr et de lr sur la pile */
+			"mrs    r0, spsr\t\n"
+			"stmfd  sp!, {r0, lr}\t\n"
+	);
+	/* reinitialisation du timer si necessaire */
+	if (_ack_timer) {
+		// on traite les taches en attentes sur ntiks
+		waitfile_process();
+		// on autorise la tache vide (0) a ecrire
+		flag_tache_vide = 1;
+		timer_int_clear(0);
+	} else {
+		_ack_timer = 1;
+	}
+	/* initialise le pointeur de pile IRQ de la tache courante a la position
        actuelle du pointeur de pile */
-    _contexte[_tache_c].sp_irq = sp;
-    /* recherche la prochaine tache a executer */
-    _tache_c = priosys_next();
-    printf("[Switch id=%d]\n", _tache_c);
-    /* verifie qu'une tache suivante existe, sinon arret du noyau */
-    if (_tache_c == NB_TACHES) {
-        printf("Plus rien à ordonnancer.\n");
-        noyau_exit();
-    }
+	_contexte[_tache_c].sp_irq = sp;
+	/* recherche la prochaine tache a executer */
+	_tache_c = priosys_next();
+	/* verifie qu'une tache suivante existe, sinon arret du noyau */
+	if (_tache_c == NB_TACHES) {
+		printf("Plus rien à ordonnancer.\n");
+		noyau_exit();
+	}
 
-    /* on bascule sur la nouvelle tache a executer */
-    /* incrémentation du compter d'activation de la nouvelle tache */
-    compteurs[_tache_c]++;
-    /* p pointe sur la nouvelle tache courante */
-    p = &_contexte[_tache_c];
-    /* on verifie que la tache est dans l'etat PRET, si oui, on la charge
+	/* on bascule sur la nouvelle tache a executer */
+	/* incrémentation du compter d'activation de la nouvelle tache */
+	compteurs[_tache_c]++;
+	/* p pointe sur la nouvelle tache courante */
+	p = &_contexte[_tache_c];
+	/* on verifie que la tache est dans l'etat PRET, si oui, on la charge
        si non, elle est deja en cours d'execution donc on restaure la valeur
        de sp pour preparer la restauration du contexte */
-    if (p->status == PRET) {
-        /* charger sp initial */
-        sp = p->sp_ini;
-        /* passage en mode SYS */
-        _set_arm_mode_(ARMMODE_SYS);
-        /* charger sp pour le systeme */
-        sp = p->sp_ini - PILE_IRQ;
-        /* mise a jour du status de la tache en EXEC */
-        p->status = EXEC;
-        /* autoriser les interruptions */
-        _irq_enable_();
-        /* lancement de la tache */
-        (*p->tache_adr)();
-    } else {
-        sp = p->sp_irq;
-    }
-    /* restauration du contexte complet de la tache depuis la pile IRQ de la
+	if (p->status == PRET) {
+		/* charger sp initial */
+		sp = p->sp_ini;
+		/* passage en mode SYS */
+		_set_arm_mode_(ARMMODE_SYS);
+		/* charger sp pour le systeme */
+		sp = p->sp_ini - PILE_IRQ;
+		/* mise a jour du status de la tache en EXEC */
+		p->status = EXEC;
+		/* autoriser les interruptions */
+		_irq_enable_();
+		/* lancement de la tache */
+		(*p->tache_adr)();
+	} else {
+		sp = p->sp_irq;
+	}
+	/* restauration du contexte complet de la tache depuis la pile IRQ de la
        tache */
-    __asm__ __volatile__(
-            /* restauration du contexte spsr et de lr */
-            "ldmfd  sp!, {r0, lr}\t\n"
-            "msr    spsr, r0\t\n"
-            /* restauration des registres du mode system */
-            "ldmfd  sp, {r0-r14}^\t\n"
-            /* attente d'un cycle pour eviter d'ecraser des donnees */
-            "nop\t\n"
-            /* ajustement du pointeur de pile IRQ */
-            "add    sp, sp, #60\t\n"
-            /* ajustement de lr pour faire un retour d'exception */
-            "subs   pc, lr, #4\t\n"
-    );
+	__asm__ __volatile__(
+			/* restauration du contexte spsr et de lr */
+			"ldmfd  sp!, {r0, lr}\t\n"
+			"msr    spsr, r0\t\n"
+			/* restauration des registres du mode system */
+			"ldmfd  sp, {r0-r14}^\t\n"
+			/* attente d'un cycle pour eviter d'ecraser des donnees */
+			"nop\t\n"
+			/* ajustement du pointeur de pile IRQ */
+			"add    sp, sp, #60\t\n"
+			/* ajustement de lr pour faire un retour d'exception */
+			"subs   pc, lr, #4\t\n"
+	);
 }
 

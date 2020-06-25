@@ -21,7 +21,7 @@
 #define TACHE_A_SLEEP 30
 #define TACHE_A_WORK  10
 #define TACHE_B_SLEEP 5
-#define TACHE_B_WORK  100
+#define TACHE_B_WORK  2
 #define TACHE_C_SLEEP 10
 #define TACHE_C_WORK  5
 #define TACHE_D_SLEEP 15
@@ -51,7 +51,7 @@ void tache_msg(uint16_t *idx, uint16_t color, char* name, int i) {
 	uint16_t b_idx = *idx;
 
 	_lock_();
-	if(fifogen_add(&fifo_messages, &b_idx) != 0){
+	if(fifogen_get(&fifo_messages, &b_idx) != 0){
 		messages[b_idx*TAILLE_MESSAGE] = '\0';
 		str_cat(&messages[b_idx*TAILLE_MESSAGE], CODE_BACKGROUND_COLOR);
 		i_to_a10 (color,temp_string);
@@ -73,29 +73,29 @@ TACHE tacheMAIN(void) {
 
 	puts("------> EXEC tache M");
 	active(cree(tacheA, 1));
-//	active(cree(tacheB, 2));
-//	active(cree(tacheC, 2));
-//	active(cree(tacheD, 2));
-//	active(cree(tacheE, 5));
+	active(cree(tacheB, 2));
+	active(cree(tacheC, 2));
+	active(cree(tacheD, 2));
+	active(cree(tacheE, 5));
 
 	while(1){
 		_lock_();
 		if(fifogen_taille_get(&fifo_messages) != 0){
-			fifogen_pop(&fifo_messages, &idx);
+			fifogen_put(&fifo_messages, &idx);
 			printf(&messages[idx*TAILLE_MESSAGE]);
 		}
 		_unlock_();
 
 		while(flag_tache_vide != 0){
 			_lock_();
-			if(fifogen_add(&fifo_messages, &idx) != 0){
+			if(fifogen_get(&fifo_messages, &idx) != 0){
 				messages[idx*TAILLE_MESSAGE] = '\0';
 				str_cat(&messages[idx*TAILLE_MESSAGE], CODE_BACKGROUND_COLOR);
 				i_to_a10 (16,temp_string);
 				str_cat(&messages[idx*TAILLE_MESSAGE], temp_string);
-				str_cat(&messages[idx*TAILLE_MESSAGE], "m A");
-				i_to_a10 (idx,temp_string);
-				str_cat(&messages[idx*TAILLE_MESSAGE], temp_string);
+				str_cat(&messages[idx*TAILLE_MESSAGE], "m M");
+//				i_to_a10 (idx,temp_string);
+//				str_cat(&messages[idx*TAILLE_MESSAGE], temp_string);
 				str_cat(&messages[idx*TAILLE_MESSAGE], CODE_RESET_COLOR);
 			}
 			flag_tache_vide = 0;
@@ -117,6 +117,9 @@ TACHE tacheA(void) {
 
 		if(i % TACHE_A_WORK == 0)
 			waitfornticks(TACHE_A_SLEEP);
+
+//		tache_msg(&idx, 39, "A", i++);
+//		waitfornticks((i % TACHE_A_WORK == 0) ? TACHE_A_SLEEP : 1);
 	}
 }
 
@@ -126,8 +129,16 @@ TACHE tacheB(void) {
 
 	puts("------> DEBUT tache B");
 	while (1) {
-		tache_msg(&idx, 88, "B", i++);
-		waitfornticks((i % TACHE_B_WORK == 0) ? TACHE_B_SLEEP : 1);
+		if(flag_tache_vide != 0) {
+			tache_msg(&idx, 88, "B", i++);
+			flag_tache_vide = 0;
+		}
+
+		if(i % TACHE_B_WORK == 0)
+			waitfornticks(TACHE_B_SLEEP);
+
+//		tache_msg(&idx, 88, "B", i++);
+//		waitfornticks((i % TACHE_B_WORK == 0) ? TACHE_B_SLEEP : 1);
 	}
 }
 
@@ -137,8 +148,16 @@ TACHE tacheC(void) {
 
 	puts("------> DEBUT tache C");
 	while (1) {
-		tache_msg(&idx, 53, "C", i++);
-		waitfornticks((i % TACHE_C_WORK == 0) ? TACHE_C_SLEEP : 1);
+		if(flag_tache_vide != 0) {
+			tache_msg(&idx, 53, "C", i++);
+			flag_tache_vide = 0;
+		}
+
+		if(i % TACHE_C_WORK == 0)
+			waitfornticks(TACHE_C_SLEEP);
+
+//		tache_msg(&idx, 53, "C", i++);
+//		waitfornticks((i % TACHE_C_WORK == 0) ? TACHE_C_SLEEP : 1);
 	}
 }
 
@@ -148,10 +167,18 @@ TACHE tacheD(void) {
 
 	puts("------> DEBUT tache D");
 	while (1) {
-		tache_msg(&idx, 21, "D", i++);
-		waitfornticks((i % TACHE_D_WORK == 0) ? TACHE_D_SLEEP : 1);
+		if(flag_tache_vide != 0) {
+			tache_msg(&idx, 21, "D", i++);
+			flag_tache_vide = 0;
+		}
 
-		if (i==50) noyau_exit();
+		if(i % TACHE_D_WORK == 0)
+			waitfornticks(TACHE_D_SLEEP);
+
+//		tache_msg(&idx, 21, "D", i++);
+//		waitfornticks((i % TACHE_D_WORK == 0) ? TACHE_D_SLEEP : 1);
+
+		if (i==300) noyau_exit();
 	}
 }
 
@@ -161,8 +188,16 @@ TACHE tacheE(void) {
 
 	puts("------> DEBUT tache E");
 	while (1) {
-		tache_msg(&idx, 142, "E", i++);
-		waitfornticks((i % TACHE_E_WORK == 0) ? TACHE_E_SLEEP : 1);
+		if(flag_tache_vide != 0) {
+			tache_msg(&idx, 142, "E", i++);
+			flag_tache_vide = 0;
+		}
+
+		if(i % TACHE_E_WORK == 0)
+			waitfornticks(TACHE_E_SLEEP);
+
+//		tache_msg(&idx, 142, "E", i++);
+//		waitfornticks((i % TACHE_E_WORK == 0) ? TACHE_E_SLEEP : 1);
 	}
 }
 

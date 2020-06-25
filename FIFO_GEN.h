@@ -61,7 +61,7 @@ void fifogen_init(FIFO_GEN *f, uint16_t Nb_ptr);
  * sortie : -1 si succes, O si erreur
  * description : ajoute un element a la file
  */
-uint8_t fifogen_add(FIFO_GEN *f, uint16_t* idx);
+uint8_t fifogen_get(FIFO_GEN *f, uint16_t* idx);
 
 /*
  * retire un element a la file
@@ -70,7 +70,7 @@ uint8_t fifogen_add(FIFO_GEN *f, uint16_t* idx);
  * sortie : -1 si succes, O si erreur
  * description : retire un element de la file
  */
-uint8_t fifogen_pop(FIFO_GEN *f, uint16_t* idx);
+uint8_t fifogen_put(FIFO_GEN *f, uint16_t* idx);
 
 /*
  * retire un element a la file
